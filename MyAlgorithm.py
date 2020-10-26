@@ -18,6 +18,9 @@ boundaries = [
 
 class MyAlgorithm(threading.Thread):
 
+    V=0
+    W=0
+
     def __init__(self, camera, motors):
         self.camera = camera
         self.motors = motors
@@ -103,16 +106,16 @@ class MyAlgorithm(threading.Thread):
         return middle
 
     def check_recta(self,m1,m2,m3):
-        if (340<m1<460):
-            if(330<m2<390):
-                if(320<m3<340):
-                    return True
+        # if (340<m1<460):
+        if(310<m3<350):
+           return True
         else:
             return False
 
 
 
     def algorithm(self):
+           
         #GETTING THE IMAGES
         image = self.getImage()
 
@@ -131,47 +134,46 @@ class MyAlgorithm(threading.Thread):
         height, width, channels = output.shape
         # 480 alto por 570 ancho, en el 240 es el horizonte, 3l 300 3mpi3za a la izquierda
 
-        #cv2.line(output,(0,300),(570,300),(0,255,0),1)
 
-        #cv2.line(output,(0,400),(570,400),(0,255,0),1)
         near = self.draw_circle(output,400)
         medium = self.draw_circle(output,300)
         far = self.draw_circle(output,250)
 
-        VA_recto = self.check_recta(ner, medium, far)
+        VA_recto = self.check_recta(near, medium, far)
 
-        V=0
-
-       
-        print("400:", m_400, " 300:", m_300, " 200 :", m_250)
+        #print("near:", near, " medium:", medium, " far :", far)
         if(VA_recto):
-            print("QUE VOY BIEN")
-            V+=5
-            #esle: si far esta a tal, giro a un lado, si tambien lo esta medium, giro más rapido
+            MyAlgorithm.V = 30
+            
+            MyAlgorithm.W =-0.004*(far-330)
+            print("RECTO V es : ", MyAlgorithm.V," W es : ",  MyAlgorithm.W) 
+            #W=0
+        else:
+            pd = 0.005
+            if(abs(far-330)>30):
+                pd = 0.020
+                #while(MyAlgorithm.V>15):
+                if(MyAlgorithm.V > 25):
+                    MyAlgorithm.V = MyAlgorithm.V-3
+            
+                print("CERRADA V es : ", MyAlgorithm.V," W es : ",  MyAlgorithm.W) 
+
+            if(abs(far-330)>60):
+                pd = 0.03
+                if(MyAlgorithm.V>15):
+                    MyAlgorithm.V = MyAlgorithm.V-4
+                print(" MUY CERRADA V es : ", MyAlgorithm.V," W es : ",  MyAlgorithm.W) 
+        
+            MyAlgorithm.W =-pd*(far-330)
+
+           
+        self.motors.sendW(MyAlgorithm.W)
             
 
-        self.motors.sendV(V)
-        # for i in range(570):
-        #     if np.any(output[240:260, i] != 0):
-        #         #output[420:430, i]= (0,0,200)
-        #         if(i>= 240):
-        #             output[240:260, i]= (0,200,0)
-        #             #self.motors.sendW(-5)
-        #             #esta a la derecha de la linea, que gire  a la derecha
-        #         elif(i<=240):
-        #             #esta a la izquierda de la linea, que gire  a la izquierda
-        #             output[240:260, i] = (0,0,200)
-        #             #self.motors.sendW(5)
-
-        
+        self.motors.sendV(MyAlgorithm.V)
+       
         
 
-        # Add your code here
         print "Runing"
 
-        #EXAMPLE OF HOW TO SEND INFORMATION TO THE ROBOT ACTUATORS
-        
-        
-
-        #SHOW THE FILTERED IMAGE ON THE GUI
         self.set_threshold_image(output)
